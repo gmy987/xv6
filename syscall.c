@@ -20,6 +20,7 @@ fetchint(uint addr, int *ip)
   if(addr >= proc->sz || addr+4 > proc->sz)
     return -1;
   *ip = *(int*)(addr);
+  //cprintf("argument: %d\n",*ip);
   return 0;
 }
 
@@ -36,8 +37,10 @@ fetchstr(uint addr, char **pp)
   *pp = (char*)addr;
   ep = (char*)proc->sz;
   for(s = *pp; s < ep; s++)
-    if(*s == 0)
+    if(*s == 0){
+	  cprintf("argument: %s\n",*pp);
       return s - *pp;
+	}
   return -1;
 }
 
