@@ -9,6 +9,7 @@
 #include "spinlock.h"
 
 // Interrupt descriptor table (shared by all CPUs).
+int mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
@@ -86,6 +87,17 @@ trap(struct trapframe *tf)
               tf->trapno, cpu->id, tf->eip, rcr2());
       panic("trap");
     }
+	//lazy allocation
+	char *mem;
+	uint a,newsz;
+	a = PGROUNDDOWN(rcr2());
+	newsz = proc->sz;
+	for(; a < newsz; a += PGSIZE){
+		mem = kalloc();
+		memset(mem,0,PGSIZE);
+		mappages(proc->pgdir,(char*)a, PGSIZE, v2p(mem), PTE_W|PTE_U);
+	}
+	return;
     // In user space, assume process misbehaved.
     cprintf("pid %d %s: trap %d err %d on cpu %d "
             "eip 0x%x addr 0x%x--kill proc\n",
