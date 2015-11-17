@@ -17,6 +17,7 @@ struct entry *table[NBUCKET];
 int keys[NKEYS];
 int nthread = 1;
 volatile int done;
+pthread_mutex_t mutex;
 
 
 double
@@ -55,6 +56,7 @@ static
 void put(int key, int value)
 {
   struct entry *n, **p;
+  pthread_mutex_lock(&mutex);
   for (p = &table[key%NBUCKET], n = table[key % NBUCKET]; n != 0; p = &n->next, n = n->next) {
     if (n->key > key) {
       insert(key, value, p, n);
@@ -63,6 +65,7 @@ void put(int key, int value)
   }
   insert(key, value, p, n);
  done:
+  pthread_mutex_unlock(&mutex);
   return;
 }
 
@@ -112,6 +115,7 @@ int
 main(int argc, char *argv[])
 {
   pthread_t *tha;
+  pthread_mutex_init(&mutex,NULL);
   void *value;
   long i;
   double t1, t0;
@@ -136,4 +140,5 @@ main(int argc, char *argv[])
   }
   t1 = now();
   printf("completion time = %f\n", t1-t0);
+  pthread_mutex_destroy(&mutex);
 }
